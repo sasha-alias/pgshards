@@ -1,0 +1,17 @@
+cluster_name: demo
+port: 5432
+encoding: UTF-8
+shards_count: 4
+
+postgres:
+    data_dir: /data
+    backup_dir: "/backup/incoming"
+    log_dir: "/var/log/postgresql"
+    checkpoint_segments: "256"
+    shared_buffers: "100MB"
+    work_mem: "100MB"
+    maintenance_work_mem: "100MB"
+
+pgbouncer:
+    port: 6432
+    default_pool_size: 10

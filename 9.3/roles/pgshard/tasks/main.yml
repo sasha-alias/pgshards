@@ -3,7 +3,7 @@
   sudo: yes
   sudo_user: postgres
   register: command_result
-  failed_when: ("already exists" not in command_result.stderr)
+  failed_when: (command_result.rc == 1 and "already exists" not in command_result.stderr)
 
 - name: create tablespace location
   file: path={{postgres.data_dir}}/{{cluster_name}}{{'_%02d'|format(item)}} owner=postgres group=postgres state=directory

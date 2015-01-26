@@ -1,0 +1,11 @@
+- demo_proxy:
+
+    - sql: SELECT * FROM shards.create_owner('demo', 'demo');
+    - schema: demo
+    - sql: SELECT * FROM shards.set_owner('demo', 'demo');
+
+- demo_shard:
+
+    - sql: SELECT * FROM shards.create_owner('demo', 'demo');
+    - schema: demo
+    - sql: SELECT * FROM shards.set_owner('demo', 'demo');

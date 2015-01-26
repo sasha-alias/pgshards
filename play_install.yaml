@@ -1,0 +1,8 @@
+- hosts: demo_shards
+  roles: 
+  - role: postgres
+  - role: pgbouncer
+  - role: pgproxy
+  - role: pgshard
+  - role: demo_proxy
+  - role: demo_shard
