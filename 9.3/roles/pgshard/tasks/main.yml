@@ -1,0 +1,65 @@
+- name: create dbowner
+  command: psql -p {{port}} -c "CREATE USER {{cluster_name}}"
+  sudo: yes
+  sudo_user: postgres
+  register: command_result
+  failed_when: ("already exists" not in command_result.stderr)
+
+- name: create tablespace location
+  file: path={{postgres.data_dir}}/{{cluster_name}}{{'_%02d'|format(item)}} owner=postgres group=postgres state=directory
+  with_items: hostvars[inventory_hostname].shards
+  sudo: yes
+
+- name: create tablespaces
+  command: psql -q -p {{port}} -c "CREATE TABLESPACE {{cluster_name}}{{'_%02d'|format(item)}} OWNER {{cluster_name}} LOCATION '{{postgres.data_dir}}/{{cluster_name}}{{'_%02d'|format(item)}}'"
+  with_items: hostvars[inventory_hostname].shards
+  sudo: yes
+  sudo_user: postgres
+  register: command_result
+  failed_when: (command_result.rc != 0 and "already exists" not in command_result.stderr)
+
+- name: create shards
+  command: psql -q -p {{port}} -c "CREATE DATABASE {{cluster_name}}{{'_%02d'|format(item)}} OWNER={{cluster_name}} ENCODING='{{encoding}}' TABLESPACE={{cluster_name}}{{'_%02d'|format(item)}}"
+  with_items: hostvars[inventory_hostname].shards
+  sudo: yes
+  sudo_user: postgres
+  register: command_result
+  failed_when: (command_result.rc != 0 and "already exists" not in command_result.stderr)
+
+- name: setup plproxy
+  command: psql -c 'CREATE EXTENSION IF NOT EXISTS plproxy;' -d {{cluster_name}}{{'_%02d'|format(item)}} -p {{port}}
+  sudo: yes
+  sudo_user: postgres
+  with_items: hostvars[inventory_hostname].shards
+
+- name: create FDW plproxy
+  command: psql -c 'CREATE FOREIGN DATA WRAPPER plproxy;' -d {{cluster_name}}{{'_%02d'|format(item)}} -p {{port}}
+  sudo: yes
+  sudo_user: postgres
+  register: command_result
+  with_items: hostvars[inventory_hostname].shards
+  failed_when: ("already exists" not in command_result.stderr)
+
+- name: grant plproxy to public
+  command: psql -c 'GRANT USAGE ON FOREIGN DATA WRAPPER plproxy TO public;' -d {{cluster_name}} -p {{port}}
+  sudo: yes
+  sudo_user: postgres
+
+- name: create pg_trgm extension
+  command: psql -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;" -d {{cluster_name}}{{'_%02d'|format(item)}} -p {{port}}
+  sudo: yes
+  sudo_user: postgres
+  with_items: hostvars[inventory_hostname].shards
+
+- name: create shards extension
+  command: psql -c "CREATE EXTENSION IF NOT EXISTS shards;" -d {{cluster_name}}{{'_%02d'|format(item)}} -p {{port}}
+  sudo: yes
+  sudo_user: postgres
+  with_items: hostvars[inventory_hostname].shards
+
+- name: initialize global sequence
+  command: psql -c "SELECT * FROM shards.set_conf({{item}}, {{shards_count|int-1}}, {{item+1}});" -d {{cluster_name}}{{'_%02d'|format(item)}} -p {{port}}
+  sudo: yes
+  sudo_user: postgres
+  with_items: hostvars[inventory_hostname].shards
+

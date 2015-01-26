@@ -1,0 +1,17 @@
+packages:
+  - make
+  - python-dev
+  - python-pip
+  - python-psycopg2
+  - python-yaml
+  - postgresql-server-dev-9.3
+  - postgresql-9.3
+  - postgresql-contrib-9.3
+  - postgresql-9.3-plproxy
+  - postgresql-plpython-9.3
+  - skytools3
+  - skytools3-ticker
+  - libv8-dev
+  - pgxnclient
+  - iotop
+  - sysstat

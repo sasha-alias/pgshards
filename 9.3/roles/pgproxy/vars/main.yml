@@ -1,0 +1,13 @@
+cluster_query: "
+CREATE SERVER {{cluster_name}}_cluster FOREIGN DATA WRAPPER plproxy OPTIONS(connection_lifetime '1800', 
+{% for host in groups[cluster_name+'_shards'] %} 
+{% set outer_loop = loop %}
+{% for shard in hostvars[host].shards %} 
+  {{ \"p%s 'host=%s dbname=%s_%02d port=%s'\" | format(shard, hostvars[host].ip, cluster_name, shard, pgbouncer.port) }}
+  {% if not outer_loop.last or not loop.last %}, {% endif %} 
+{% endfor %} 
+{% endfor %} 
+);
+"
+
+pgbouncer_dblist: "\n{{cluster_name}} = host=localhost port={{port}}\n{% if groups.has_key(cluster_name+'_shards') %}{% for host in groups[cluster_name+'_shards'] %}{% set outer_loop = loop %}{% for shard in hostvars[host].shards %}{{cluster_name}}{{'_%02d'|format(shard)}} = host={{hostvars[host].ip}} port={{port}}\n{% endfor %}{% endfor %}{% endif %}"

@@ -1,0 +1,17 @@
+- name: create build dir
+  file: path=tmp/shards-schema state=directory
+
+- name: copy build files
+  copy: src={{ item }} dest=/tmp/shards-schema/
+  with_fileglob:
+    - "*"
+
+- name: copy build files
+  template: src=shards--1.0.sql dest=/tmp/shards-schema/
+
+- name: install shards-schema
+  command: make install chdir=/tmp/shards-schema
+  sudo: yes
+
+- name: remove build dir
+  file: path=/tmp/shards-schema state=absent

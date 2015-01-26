@@ -1,0 +1,58 @@
+- name: create database
+  postgresql_db: name={{cluster_name}}
+               encoding={{encoding | default("UTF-8")}}
+               port={{port}}
+  sudo: yes
+  sudo_user: postgres
+
+- name: setup plproxy
+  command: psql -c 'CREATE EXTENSION IF NOT EXISTS plproxy;' -d {{cluster_name}} -p {{port}}
+  sudo: yes
+  sudo_user: postgres
+
+- name: create FDW plproxy
+  command: psql -c 'CREATE FOREIGN DATA WRAPPER plproxy;' -d {{cluster_name}} -p {{port}}
+  sudo: yes
+  sudo_user: postgres
+  register: command_result
+  failed_when: ("already exists" not in command_result.stderr)
+
+- name: grant plproxy to public
+  command: psql -c 'GRANT USAGE ON FOREIGN DATA WRAPPER plproxy TO public;' -d {{cluster_name}} -p {{port}}
+  sudo: yes
+  sudo_user: postgres
+
+- name: create cluster 
+  command: psql -c "{{cluster_query}}" -d {{cluster_name}} -p {{port}}
+  sudo: yes
+  sudo_user: postgres
+  failed_when: ("already exists" not in command_result.stderr)
+  when: shards_count is defined
+
+- name: grant cluster to public
+  command: psql -c 'GRANT USAGE ON FOREIGN SERVER {{cluster_name}}_cluster TO public;' -d {{cluster_name}} -p {{port}}
+  sudo: yes
+  sudo_user: postgres
+  when: shards_count is defined
+
+- name: create pg_trgm extension
+  command: psql -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;" -d {{cluster_name}} -p {{port}}
+  sudo: yes
+  sudo_user: postgres
+
+- name: create shards extension
+  command: psql -c "CREATE EXTENSION IF NOT EXISTS shards;" -d {{cluster_name}} -p {{port}}
+  sudo: yes
+  sudo_user: postgres
+
+- name: clean pgbouncer config
+  lineinfile: dest=/etc/pgbouncer/pgbouncer.ini state=absent regexp="^{{cluster_name}}[0-9_]*\s*=\s*.*"
+  sudo: yes
+
+- name: update pgbouncer config
+  lineinfile: dest=/etc/pgbouncer/pgbouncer.ini line="{{pgbouncer_dblist}}" insertafter="\[databases\]"
+  sudo: yes
+
+- name: reload pgbouncer
+  service: name=pgbouncer state=reloaded
+  sudo: yes

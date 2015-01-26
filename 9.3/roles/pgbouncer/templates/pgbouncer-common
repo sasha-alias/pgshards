@@ -1,0 +1,9 @@
+/var/log/pgbouncer/*.log {
+       daily
+       rotate 30
+       delaycompress
+       compress
+       notifempty
+       missingok
+}
+

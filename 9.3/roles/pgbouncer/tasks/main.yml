@@ -1,0 +1,32 @@
+  - name: install packages
+    apt: pkg=pgbouncer state=present
+    sudo: yes
+    with_items: packages
+
+  - name: create pgbouncer log dir
+    file: state=directory path=/var/log/pgbouncer owner=postgres group=postgres
+    sudo: yes
+
+  - name: copy pgbouncer ini file
+    template: src=pgbouncer.ini dest=/etc/pgbouncer/pgbouncer.ini
+    sudo: yes
+
+  - name: copy pgbouncer users file
+    action: template src=userlist.txt dest=/etc/pgbouncer/userlist.txt
+    sudo: yes
+
+  - name: copy pgbouncer file
+    action: template src=pgbouncer dest=/etc/init.d/pgbouncer
+    sudo: yes
+
+  - name: copy pgbouncer-common file
+    action: template src=pgbouncer-common dest=/etc/logrotate.d/pgbouncer-common owner=root group=root mode=644
+    sudo: yes
+
+  - name: copy pgbouncer config file
+    copy: src=pgbouncer dest=/etc/default/pgbouncer
+    sudo: yes
+
+  - name: start pgbouncer
+    service: name=pgbouncer state=restarted
+    sudo: yes
