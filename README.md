@@ -1,20 +1,27 @@
 # pgshards
 
-Installation sharded Postgresql database and utilities on Ubuntu 14.04 trusty.
-
-Repository contains ansible roles for installation and configuration sharded Postgresql cluster.
+Installation and configuration of sharded Postgresql cluster on Ubuntu 14.04 trusty.
 
 The installed clusters comprised of configured Postgresql, Pl/Proxy, PgBouncer and PGQ.
 
 
 ## Running demo cluster
 
-In order to try it out you need a VertualBox and Vagrant installed.
+In order to try it out you need a VirtualBox and Vagrant installed.
 
     git clone https://github.com/sasha-alias/pgshards
     cd pgshards
     vagrant box add  ubuntu/trusty64
     vagrant up
+
+After it's finished you should be able to connect to postgresql demo cluster using the following connectstring:
+
+    psql postgresql://demo:demo@localhost:5455/demo
+
+In order to connect to the host via ssh use the command:
+
+    vagrant ssh
+
 
 ## Repository Structure
 
