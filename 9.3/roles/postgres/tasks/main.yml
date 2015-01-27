@@ -24,6 +24,7 @@
       - postgresql-contrib-9.3
       - postgresql-9.3-plproxy
       - postgresql-plpython-9.3
+      - postgresql-9.3-pgq3
       - skytools3
       - skytools3-ticker
       - libv8-dev
@@ -51,6 +52,10 @@
     copy: src=pg_hba.conf dest=/etc/postgresql/9.3/main/pg_hba.conf
     sudo: yes
 
+  - name: copy pgqd.ini
+    copy: src=pgqd.ini dest=/etc/skytools/pgqd.ini
+    sudo: yes
+
   - name: restart postgresql
     command: /etc/init.d/postgresql restart
     sudo: yes
@@ -59,23 +64,32 @@
     command: pgxn install plv8
     sudo: yes
 
-  - name: create plv8 language
-    command: psql -c "CREATE EXTENSION IF NOT EXISTS plv8;" -d template1
+  - name: create postgresql extensions
+    command: psql -c "CREATE EXTENSION IF NOT EXISTS {{item}};" -d template1
+    sudo: yes
+    sudo_user: postgres
+    with_items:
+    - plv8
+    - plcoffee
+    - plpythonu
+    - pgq
+    - pgq_coop
+    - pgq_node
+    - pgq_ext
+
+  - name: create skytools user
+    command: psql -c "CREATE USER skytools SUPERUSER;" -d template1
+    register: command_result
+    failed_when: (command_result.rc != 0 and "already exists" not in command_result.stderr)
     sudo: yes
     sudo_user: postgres
 
-  - name: create plcoffee language
-    command: psql -c "CREATE EXTENSION IF NOT EXISTS plcoffee;" -d template1
-    sudo: yes
-    sudo_user: postgres
-
-  - name: create plpythonu language
-    command: psql -c "CREATE EXTENSION IF NOT EXISTS plpythonu;" -d template1
-    sudo: yes
-    sudo_user: postgres
-    
   - name: fix skytools path
     lineinfile: dest=/usr/lib/pymodules/python2.7/.path line="/usr/lib/pymodules/python2.7/skytools-3.0"
+    sudo: yes
+
+  - name: start skytools daemons
+    service: name=skytools3 state=started
     sudo: yes
 
   - name: install pgview
