@@ -6,12 +6,18 @@
     copy: src=pgdg.list dest=/etc/apt/sources.list.d/pgdg.list
     sudo: yes
 
+  - name: add psycopg2 ppa repo
+    apt_repository: 
+        repo: ppa:chris-lea/python-psycopg2 
+        update_cache: no
+    sudo: yes
+
   - name: update apt cache
     apt: update-cache=yes
     sudo: yes
 
   - name: install packages
-    apt: pkg={{item}} state=present
+    apt: pkg={{item}} state=latest
     sudo: yes
     with_items:
       - make
@@ -94,4 +100,8 @@
 
   - name: install pgview
     copy: src=pg_view.py dest=/usr/bin/pgview mode=777
+    sudo: yes
+
+  - name: reconfigure locale
+    command: dpkg-reconfigure locales
     sudo: yes
