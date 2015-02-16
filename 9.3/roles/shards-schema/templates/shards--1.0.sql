@@ -147,12 +147,21 @@ $$
 
     if len(rv) == 1:  # if cluster exists
 
-        rv = plpy.execute("SELECT NULL FROM pg_catalog.pg_user_mappings where srvname = '{{cluster_name}}_cluster' and usename = 'public'", 1)
+        rv = plpy.execute("""
+        SELECT m.OID
+        FROM pg_authid a,
+             pg_foreign_server s,
+             pg_user_mapping m
+        WHERE a.rolname = '%s'
+          AND s.srvname = '{{cluster_name}}_cluster'
+          AND m.umuser = a.OID
+          AND m.umserver = s.OID
+        """ % user_name, 1)
 
         if len(rv) == 1:  # if user mapping exists
-            plpy.execute("DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER {{cluster_name}}_cluster")
+            plpy.execute("DROP USER MAPPING IF EXISTS FOR "+user_name+" SERVER {{cluster_name}}_cluster")
 
-        plpy.execute("CREATE USER MAPPING FOR PUBLIC SERVER {{cluster_name}}_cluster OPTIONS (user '"+user_name+"', password "+password+")")
+        plpy.execute("CREATE USER MAPPING FOR "+user_name+" SERVER {{cluster_name}}_cluster OPTIONS (user '"+user_name+"', password "+password+")")
 
     # update pgboucer userlist
     if os.path.isfile(bouncer_userlist):
