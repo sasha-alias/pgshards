@@ -90,9 +90,9 @@
     sudo: yes
     sudo_user: postgres
 
-  - name: fix skytools path
-    lineinfile: dest=/usr/lib/pymodules/python2.7/.path line="/usr/lib/pymodules/python2.7/skytools-3.0"
-    sudo: yes
+  #- name: fix skytools path
+  #  lineinfile: dest=/usr/lib/pymodules/python2.7/.path line="/usr/lib/pymodules/python2.7/skytools-3.0"
+  #  sudo: yes
 
   - name: start skytools daemons
     service: name=skytools3 state=started

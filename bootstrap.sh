@@ -1,3 +1,4 @@
+apt-get update
 apt-get install ansible -y
 apt-get install git -y
 apt-get install python-psycopg2 -y
